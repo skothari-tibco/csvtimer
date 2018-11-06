@@ -42,8 +42,8 @@ flogo install github.com/skothari-tibco/csvtrigger
 Triggers are configured via the triggers.json of your application. The following are some example configuration of the Timer Trigger.
 
 
-### Only once immediatley
-Configure the Trigger to run a flow once with a delay of one minute.  "startDelay" settings format = "[hours]h[minutes]m[seconds]s"
+### Only once immediately
+Configure the Trigger to run a flow once immediately
 
 ```json
 {
@@ -70,8 +70,7 @@ Configure the Trigger to run a flow once with a delay of one minute.  "startDela
 ```
 
 ### Repeating
-Configure the Trigger to run a flow repeating every 10 minutes. "repeatInterval" settings format = "[hours]h[minutes]m[seconds]s"
-
+Configure the Trigger to run a flow repeating every 10 seconds. 
 ```json
 {
   "triggers": [
