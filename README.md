@@ -34,7 +34,7 @@ flogo install github.com/skothari-tibco/csvtrigger
 | Setting  | Required | Description |
 |:---------|:---------|:------------|
 | filePath   | true     | Path to a CSV file
-| repeatInterval | false     | the repeat interval (1, 200 etc in second), doesn't repeat if not specified
+| repeatInterval | false     | the repeat interval (1, 200 etc in millisecond), doesn't repeat if not specified
 
 
 ## Example Configurations
@@ -70,7 +70,7 @@ Configure the Trigger to run a flow once immediately
 ```
 
 ### Repeating
-Configure the Trigger to run a flow repeating every 10 seconds. 
+Configure the Trigger to run a flow repeating every 10 milliseconds. 
 ```json
 {
   "triggers": [
