@@ -1,8 +1,9 @@
 module github.com/skothari-tibco/csvtimer
 
 require (
-	github.com/carlescere/scheduler v0.0.0-20170109141437-ee74d2f83d82
-	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/project-flogo/core v0.9.0-alpha.3
+	github.com/skothari-tibco/scheduler v0.0.0-20181109155607-44cc0a550309 // indirect
 	github.com/stretchr/testify v1.2.2
+	go.uber.org/atomic v1.3.2 // indirect
+	go.uber.org/multierr v1.1.0 // indirect
 )

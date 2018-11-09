@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/carlescere/scheduler"
+	"github.com/skothari-tibco/scheduler"
 	"github.com/project-flogo/core/data/metadata"
 	"github.com/project-flogo/core/support/log"
 	"github.com/project-flogo/core/trigger"
@@ -162,7 +162,7 @@ func (t *Trigger) scheduleOnce(handler trigger.Handler, settings *HandlerSetting
 
 func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSettings) error {
 	t.logger.Info("Scheduling a repeating timer")
-	t.logger.Info("reapeat")
+	
 	startSeconds := 0
 
 	repeatInterval, _ := strconv.Atoi(settings.RepeatInterval)
@@ -191,7 +191,7 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 
 	if startSeconds == 0 {
 
-		timerJob, err := scheduler.Every(repeatInterval).Seconds().Run(fn)
+		timerJob, err := scheduler.Every(repeatInterval).MilliSeconds().Run(fn)
 		if err != nil {
 			t.logger.Error("Error scheduling repeating timer: ", err.Error())
 		}
