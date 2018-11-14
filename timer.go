@@ -36,11 +36,17 @@ func (o *Output) ToMap() map[string]interface{} {
 	}
 }
 func (o *Output) FromMap(values map[string]interface{}) error {
-	return map[string]interface{}{
-		"data":  o.Data,
-		"error": o.Error,
-	
+	var err error
+	o.Data, err = coerce.ToArray(values["data"])
+	if err != nil {
+		return err
 	}
+	o.Error, err = coerce.ToAny(values["error"])
+	if err != nil {
+		return err
+	}
+	return nil
+
 
 }
 
