@@ -8,7 +8,7 @@ import (
 	"os"
 	"strconv"
 	"time"
-
+	"github.com/project-flogo/core/data/coerce"
 	"github.com/skothari-tibco/scheduler"
 	"github.com/project-flogo/core/data/metadata"
 	"github.com/project-flogo/core/support/log"
