@@ -131,9 +131,9 @@ func (t *Trigger) scheduleOnce(handler trigger.Handler, settings *HandlerSetting
 
 		triggerData := &Output{}
 
-		triggerData["data"] = data
+		triggerData.Data = data
 
-		triggerData["error"] = err
+		triggerData.Error = ""
 
 		_, err = handler.Handle(context.Background(), triggerData)
 		if err != nil {
@@ -177,9 +177,9 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 		if err != nil {
 			return
 		}
-		triggerData["data"] = data
+		triggerData.Data = data
 
-		triggerData["error"] = ""
+		triggerData.Error = ""
 
 		fmt.Println("Starting flow")
 		_, err = handler.Handle(context.Background(), triggerData)
