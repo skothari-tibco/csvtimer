@@ -129,7 +129,7 @@ func (t *Trigger) scheduleOnce(handler trigger.Handler, settings *HandlerSetting
 
 		data, err := ReadCsv(settings.FilePath)
 
-		triggerData := make(map[string]interface{})
+		triggerData := &Output{}
 
 		triggerData["data"] = data
 
@@ -172,7 +172,7 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 	fn := func() {
 		t.logger.Debug("Executing \"Repeating\" timer")
 
-		triggerData := make(map[string]interface{})
+		triggerData := &Output{}
 		data, err := ReadCsvInterval(settings.FilePath)
 		if err != nil {
 			return
