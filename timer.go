@@ -8,7 +8,7 @@ import (
 	"os"
 	"strconv"
 	"time"
-	"github.com/project-flogo/core/data/coerce"
+
 	"github.com/skothari-tibco/scheduler"
 	"github.com/project-flogo/core/data/metadata"
 	"github.com/project-flogo/core/support/log"
@@ -18,37 +18,7 @@ import (
 var COUNT int
 var LINES [][]string
 
-type HandlerSettings struct {
-	StartInterval  string `md:"startDelay"`
-	RepeatInterval string `md:"repeatInterval"`
-	FilePath       string `md:"filePath"`
-}
 
-type Output struct {
-	Data  interface{} `md:"data"`
-	Error interface{} `md:"error"`
-}
-
-func (o *Output) ToMap() map[string]interface{} {
-	return map[string]interface{}{
-		"Data":  o.Data,
-		"Error": o.Error,
-	}
-}
-func (o *Output) FromMap(values map[string]interface{}) error {
-	var err error
-	o.Data, err = coerce.ToArray(values["data"])
-	if err != nil {
-		return err
-	}
-	o.Error, err = coerce.ToAny(values["error"])
-	if err != nil {
-		return err
-	}
-	return nil
-
-
-}
 
 var triggerMd = trigger.NewMetadata(&HandlerSettings{}, &Output{})
 
@@ -145,10 +115,14 @@ func (t *Trigger) scheduleOnce(handler trigger.Handler, settings *HandlerSetting
 
 		triggerData := &Output{}
 
+
 		triggerData.Data = data
 
 		triggerData.Error = ""
 
+
+		triggerData.Error = ""
+		
 		_, err = handler.Handle(context.Background(), triggerData)
 		if err != nil {
 			t.logger.Error("Error running handler: ", err.Error())
@@ -195,7 +169,6 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 
 		triggerData.Error = ""
 
-		fmt.Println("Starting flow")
 		_, err = handler.Handle(context.Background(), triggerData)
 		COUNT = COUNT + 1
 		if err != nil {
