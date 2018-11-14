@@ -35,6 +35,14 @@ func (o *Output) ToMap() map[string]interface{} {
 		"Error": o.Error,
 	}
 }
+func (o *Output) FromMap(values map[string]interface{}) error {
+	return map[string]interface{}{
+		"data":  o.Data,
+		"error": o.Error,
+	
+	}
+
+}
 
 var triggerMd = trigger.NewMetadata(&HandlerSettings{}, &Output{})
 
