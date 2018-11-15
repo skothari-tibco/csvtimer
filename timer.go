@@ -122,7 +122,7 @@ func (t *Trigger) scheduleOnce(handler trigger.Handler, settings *HandlerSetting
 
 
 		triggerData.Error = ""
-		
+		t.logger.Debug("Passing data to handler", data)
 		_, err = handler.Handle(context.Background(), triggerData)
 		if err != nil {
 			t.logger.Error("Error running handler: ", err.Error())
@@ -169,6 +169,7 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 
 		triggerData.Error = ""
 
+		t.logger.Debug("Passing data to handler", data)
 		_, err = handler.Handle(context.Background(), triggerData)
 		COUNT = COUNT + 1
 		if err != nil {
