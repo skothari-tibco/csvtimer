@@ -9,16 +9,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/skothari-tibco/scheduler"
 	"github.com/project-flogo/core/data/metadata"
 	"github.com/project-flogo/core/support/log"
 	"github.com/project-flogo/core/trigger"
+	"github.com/skothari-tibco/scheduler"
 )
-
-var COUNT int
-var LINES [][]string
-
-
 
 var triggerMd = trigger.NewMetadata(&HandlerSettings{}, &Output{})
 
@@ -47,7 +42,6 @@ type Trigger struct {
 
 // Init implements trigger.Init
 func (t *Trigger) Initialize(ctx trigger.InitContext) error {
-	COUNT = 0
 	t.handlers = ctx.GetHandlers()
 	t.logger = ctx.Logger()
 
@@ -61,16 +55,16 @@ func (t *Trigger) Start() error {
 
 	for _, handler := range handlers {
 
-		s := &HandlerSettings{}
-		err := metadata.MapToStruct(handler.Settings(), s, true)
+		handlerSettings := &HandlerSettings{}
+		err := metadata.MapToStruct(handler.Settings(), handlerSettings, true)
 		if err != nil {
 			return err
 		}
 
-		if s.RepeatInterval == "" {
-			t.scheduleOnce(handler, s)
+		if handlerSettings.RepeatInterval == "" {
+			t.scheduleOnce(handler, handlerSettings)
 		} else {
-			t.scheduleRepeating(handler, s)
+			t.scheduleRepeating(handler, handlerSettings)
 		}
 	}
 
@@ -95,7 +89,7 @@ func (t *Trigger) Stop() error {
 func (t *Trigger) scheduleOnce(handler trigger.Handler, settings *HandlerSettings) error {
 
 	seconds := 0
-
+	result := make(map[string]interface{})
 	if settings.StartInterval != "" {
 		d, err := time.ParseDuration(settings.StartInterval)
 		if err != nil {
@@ -115,13 +109,14 @@ func (t *Trigger) scheduleOnce(handler trigger.Handler, settings *HandlerSetting
 
 		triggerData := &Output{}
 
-
-		triggerData.Data = data
-
 		triggerData.Error = ""
+		if settings.Header != "" {
 
-
-		triggerData.Error = ""
+			result[settings.Header] = data
+			triggerData.Data = result
+		} else {
+			triggerData.Data = data
+		}
 		t.logger.Debug("Passing data to handler", data)
 		_, err = handler.Handle(context.Background(), triggerData)
 		if err != nil {
@@ -144,16 +139,18 @@ func (t *Trigger) scheduleOnce(handler trigger.Handler, settings *HandlerSetting
 
 		t.timers = append(t.timers, timerJob)
 	}
+	t.Stop()
 
 	return nil
 }
 
 func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSettings) error {
 	t.logger.Info("Scheduling a repeating timer")
-	
+	result := make(map[string]interface{})
 	startSeconds := 0
 
 	repeatInterval, _ := strconv.Atoi(settings.RepeatInterval)
+	settings.Count = 0
 	t.logger.Info("reapeat", repeatInterval)
 	t.logger.Debugf("Scheduling action to repeat every %d seconds", repeatInterval)
 
@@ -161,17 +158,24 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 		t.logger.Debug("Executing \"Repeating\" timer")
 
 		triggerData := &Output{}
-		data, err := ReadCsvInterval(settings.FilePath)
+		data, err := ReadCsvInterval(settings)
 		if err != nil {
-			return
+			t.Stop()
+
 		}
-		triggerData.Data = data
 
 		triggerData.Error = ""
+		if settings.Header != "" {
+			result[settings.Header] = data
+			triggerData.Data = result
+		} else {
+			triggerData.Data = data
+		}
 
 		t.logger.Debug("Passing data to handler", data)
+
 		_, err = handler.Handle(context.Background(), triggerData)
-		COUNT = COUNT + 1
+		settings.Count++
 		if err != nil {
 			t.logger.Error("Error running handler: ", err.Error())
 		}
@@ -189,15 +193,6 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 
 	return nil
 }
-
-//type PrintJob struct {
-//	Msg string
-//}
-//
-//func (j *PrintJob) Run() error {
-//	t.logger.Debug(j.Msg)
-//	return nil
-//}
 
 func ReadCsv(path string) (interface{}, error) {
 
@@ -217,21 +212,22 @@ func ReadCsv(path string) (interface{}, error) {
 	return lines, nil
 }
 
-func ReadCsvInterval(path string) (interface{}, error) {
-	if COUNT == 0 {
-		data, err := ReadCsv(path)
+func ReadCsvInterval(settings *HandlerSettings) (interface{}, error) {
+
+	if settings.Count == 0 {
+		data, err := ReadCsv(settings.FilePath)
 		if err != nil {
 			return nil, err
 		}
-		LINES = data.([][]string)
+		settings.Lines = data.([][]string)
 
-		COUNT = COUNT + 1
+		settings.Count++
 
-		return LINES[0], nil
+		return settings.Lines[0], nil
 	}
-	if COUNT == len(LINES) {
+	if settings.Count == len(settings.Lines) {
 		return nil, errors.New("Done")
 	}
-	return LINES[COUNT], nil
+	return settings.Lines[settings.Count], nil
 
 }

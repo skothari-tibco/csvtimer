@@ -6,6 +6,9 @@ type HandlerSettings struct {
 	StartInterval  string `md:"startDelay"`
 	RepeatInterval string `md:"repeatInterval"`
 	FilePath       string `md:"filePath"`
+	Header         string `md:"header"`
+	Count          int
+	Lines          [][]string
 }
 
 type Output struct {
