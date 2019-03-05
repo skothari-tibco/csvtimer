@@ -89,7 +89,8 @@ func (t *Trigger) Stop() error {
 func (t *Trigger) scheduleOnce(handler trigger.Handler, settings *HandlerSettings) error {
 
 	seconds := 0
-	result := make(map[string]interface{})
+
+	var header []string
 	if settings.StartInterval != "" {
 		d, err := time.ParseDuration(settings.StartInterval)
 		if err != nil {
@@ -110,10 +111,19 @@ func (t *Trigger) scheduleOnce(handler trigger.Handler, settings *HandlerSetting
 		triggerData := &Output{}
 
 		triggerData.Error = ""
-		if settings.Header != "" {
+		if settings.Header {
+			if len(header) == 0 {
+				header = data.([]string)
 
-			result[settings.Header] = data
-			triggerData.Data = result
+			} else {
+
+				obj := make(map[string]interface{})
+				for i := 0; i < len(data.([]string)); i++ {
+					obj[header[i]] = data.([]string)[i]
+				}
+
+				triggerData.Data = obj
+			}
 		} else {
 			triggerData.Data = data
 		}
@@ -146,7 +156,7 @@ func (t *Trigger) scheduleOnce(handler trigger.Handler, settings *HandlerSetting
 
 func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSettings) error {
 	t.logger.Info("Scheduling a repeating timer")
-	result := make(map[string]interface{})
+	var header []string
 	startSeconds := 0
 
 	repeatInterval, _ := strconv.Atoi(settings.RepeatInterval)
@@ -165,9 +175,19 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 		}
 
 		triggerData.Error = ""
-		if settings.Header != "" {
-			result[settings.Header] = data
-			triggerData.Data = result
+		if settings.Header {
+			if len(header) == 0 {
+				header = data.([]string)
+
+			} else {
+				obj := make(map[string]interface{})
+				for i := 0; i < len(data.([]string)); i++ {
+					obj[header[i]] = data.([]string)[i]
+				}
+
+				triggerData.Data = obj
+			}
+
 		} else {
 			triggerData.Data = data
 		}
@@ -175,7 +195,9 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 		t.logger.Debug("Passing data to handler", data)
 
 		_, err = handler.Handle(context.Background(), triggerData)
+
 		settings.Count++
+
 		if err != nil {
 			t.logger.Error("Error running handler: ", err.Error())
 		}
