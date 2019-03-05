@@ -90,7 +90,6 @@ func (t *Trigger) scheduleOnce(handler trigger.Handler, settings *HandlerSetting
 
 	seconds := 0
 
-	var header []string
 	if settings.StartInterval != "" {
 		d, err := time.ParseDuration(settings.StartInterval)
 		if err != nil {
@@ -112,18 +111,20 @@ func (t *Trigger) scheduleOnce(handler trigger.Handler, settings *HandlerSetting
 
 		triggerData.Error = ""
 		if settings.Header {
-			if len(header) == 0 {
-				header = data.([]string)
 
-			} else {
-
-				obj := make(map[string]interface{})
-				for i := 0; i < len(data.([]string)); i++ {
-					obj[header[i]] = data.([]string)[i]
+			obj := make(map[string]interface{})
+			for i := 0; i < len(data); i++ {
+				for j := 0; j < len(data[0]); j++ {
+					if num, err := strconv.ParseFloat(data[i][j], 64); err == nil {
+						obj[data[0][j]] = num
+					} else {
+						obj[data[0][j]] = data[i][j]
+					}
 				}
-
-				triggerData.Data = obj
 			}
+
+			triggerData.Data = obj
+
 		} else {
 			triggerData.Data = data
 		}
@@ -177,12 +178,17 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 		triggerData.Error = ""
 		if settings.Header {
 			if len(header) == 0 {
-				header = data.([]string)
+				header = data
 
 			} else {
 				obj := make(map[string]interface{})
-				for i := 0; i < len(data.([]string)); i++ {
-					obj[header[i]] = data.([]string)[i]
+				for i := 0; i < len(data); i++ {
+					if num, err := strconv.ParseFloat(data[i], 64); err == nil {
+						obj[header[i]] = num
+					} else {
+						obj[header[i]] = data[i]
+					}
+
 				}
 
 				triggerData.Data = obj
@@ -216,11 +222,11 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 	return nil
 }
 
-func ReadCsv(path string) (interface{}, error) {
+func ReadCsv(path string) ([][]string, error) {
 
 	f, err := os.Open(path)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	defer f.Close()
@@ -228,20 +234,20 @@ func ReadCsv(path string) (interface{}, error) {
 	lines, err := csv.NewReader(f).ReadAll()
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	return lines, nil
 }
 
-func ReadCsvInterval(settings *HandlerSettings) (interface{}, error) {
+func ReadCsvInterval(settings *HandlerSettings) ([]string, error) {
 
 	if settings.Count == 0 {
 		data, err := ReadCsv(settings.FilePath)
 		if err != nil {
 			return nil, err
 		}
-		settings.Lines = data.([][]string)
+		settings.Lines = data
 
 		settings.Count++
 
