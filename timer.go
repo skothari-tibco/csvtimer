@@ -128,7 +128,7 @@ func (t *Trigger) scheduleOnce(handler trigger.Handler, settings *HandlerSetting
 		} else {
 			triggerData.Data = data
 		}
-		t.logger.Debug("Passing data to handler", data)
+		t.logger.Debug("Passing data to handler", triggerData.Data)
 		_, err = handler.Handle(context.Background(), triggerData)
 		if err != nil {
 			t.logger.Error("Error running handler: ", err.Error())
@@ -198,7 +198,7 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 			triggerData.Data = data
 		}
 
-		t.logger.Debug("Passing data to handler", data)
+		t.logger.Debug("Passing data to handler", triggerData.Data)
 
 		_, err = handler.Handle(context.Background(), triggerData)
 
