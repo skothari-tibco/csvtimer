@@ -170,6 +170,7 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 
 		triggerData := &Output{}
 		data, err := ReadCsvInterval(settings)
+		settings.Count = settings.Count + 1
 		if err != nil {
 			t.Stop()
 
@@ -182,6 +183,7 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 
 			} else {
 				obj := make(map[string]interface{})
+
 				for i := 0; i < len(data); i++ {
 					if num, err := strconv.ParseFloat(data[i], 64); err == nil {
 						obj[header[i]] = num
@@ -200,9 +202,9 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 
 		t.logger.Debug("Passing data to handler", triggerData.Data)
 
-		_, err = handler.Handle(context.Background(), triggerData)
-
-		settings.Count++
+		if triggerData.Data != nil {
+			_, err = handler.Handle(context.Background(), triggerData)
+		}
 
 		if err != nil {
 			t.logger.Error("Error running handler: ", err.Error())
@@ -249,13 +251,12 @@ func ReadCsvInterval(settings *HandlerSettings) ([]string, error) {
 		}
 		settings.Lines = data
 
-		settings.Count++
-
 		return settings.Lines[0], nil
 	}
 	if settings.Count == len(settings.Lines) {
 		return nil, errors.New("Done")
 	}
+
 	return settings.Lines[settings.Count], nil
 
 }
