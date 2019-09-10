@@ -5,10 +5,12 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/project-flogo/core/data/metadata"
 	"github.com/project-flogo/core/support/log"
 	"github.com/project-flogo/core/trigger"
@@ -16,6 +18,12 @@ import (
 )
 
 var triggerMd = trigger.NewMetadata(&HandlerSettings{}, &Output{})
+
+const (
+	Resume = iota
+	Pause
+	Restart
+)
 
 func init() {
 	trigger.Register(&Trigger{}, &Factory{})
@@ -31,19 +39,41 @@ func (*Factory) Metadata() *trigger.Metadata {
 
 // New implements trigger.Factory.New
 func (*Factory) New(config *trigger.Config) (trigger.Trigger, error) {
-	return &Trigger{}, nil
+	s := &Settings{}
+
+	err := metadata.MapToStruct(config.Settings, s, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Trigger{settings: s}, nil
 }
 
 type Trigger struct {
 	timers   []*scheduler.Job
 	handlers []trigger.Handler
 	logger   log.Logger
+	settings *Settings
+	router   *httprouter.Router
+	ch       chan int
 }
 
 // Init implements trigger.Init
 func (t *Trigger) Initialize(ctx trigger.InitContext) error {
+	t.ch = make(chan int)
+
 	t.handlers = ctx.GetHandlers()
+
 	t.logger = ctx.Logger()
+
+	if t.settings.Control {
+		router := httprouter.New()
+		router.GET("/control/resume", resumeHandler(t.ch))
+		router.GET("/control/pause", pauseHandler(t.ch))
+		router.GET("/control/restart", restartHandler(t.ch))
+
+		t.router = router
+	}
 
 	return nil
 }
@@ -66,6 +96,13 @@ func (t *Trigger) Start() error {
 		} else {
 			t.scheduleRepeating(handler, handlerSettings)
 		}
+	}
+	if t.router != nil {
+
+		go func() {
+			t.logger.Info("Starting Control Server...")
+			http.ListenAndServe(":"+t.settings.Port, t.router)
+		}()
 	}
 
 	return nil
@@ -203,6 +240,18 @@ func (t *Trigger) scheduleRepeating(handler trigger.Handler, settings *HandlerSe
 		t.logger.Debug("Passing data to handler", triggerData.Data)
 
 		if triggerData.Data != nil {
+
+			select {
+			case stat := <-t.ch:
+				if stat == Restart {
+					settings.Count = 1
+					break
+				}
+				t.ch <- Resume
+			default:
+				break
+			}
+
 			_, err = handler.Handle(context.Background(), triggerData)
 		}
 

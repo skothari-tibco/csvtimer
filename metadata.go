@@ -2,6 +2,11 @@ package csvtimer
 
 import "github.com/project-flogo/core/data/coerce"
 
+type Settings struct {
+	Control bool   `md:"control"`
+	Port    string `md:"port"`
+}
+
 type HandlerSettings struct {
 	StartInterval  string `md:"startDelay"`
 	RepeatInterval string `md:"repeatInterval"`
